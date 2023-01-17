@@ -7,6 +7,10 @@ on:
         description: 'If set to true, resources will not be deleted'
         required: true
         default: 'false'
+      ref:
+        description: 'Specify Git Ref if needed.'
+        required: false
+        default: 'refs/heads/main'
 
 env:
     azCliVersion: 2.30.0
@@ -28,6 +32,7 @@ env:
     gitToken: ${{ secrets.GIT_TOKEN }}
     testPubIpName: testPubIp
     nsgName: jbosseap-nsg
+    repoName: "rhel-jboss-templates"
 
 jobs:
     preflight:
@@ -68,11 +73,11 @@ jobs:
                 ref: ${{ env.refArmttk }}
             - name: Build azure-javaee-iaas
               run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
-            - name: Checkout rhel-jboss-templates
+            - name: Checkout ${{ env.repoName }}
               uses: actions/checkout@v3
               with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
-                path: rhel-jboss-templates
+                path: ${{ env.repoName }}
+                ref: ${{ env.ref }}
             - name: Build and test rhel-jboss-templates
               run: |
                 mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests --file rhel-jboss-templates/eap74-rhel8-payg/pom.xml
@@ -102,11 +107,11 @@ jobs:
         needs: preflight
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout rhel-jboss-templates
+            - name: Checkout ${{ env.repoName }}
               uses: actions/checkout@v3
               with:
-                repository: ${{env.gitUserName}}/rhel-jboss-templates
-                path: rhel-jboss-templates
+                path: ${{ env.repoName }}
+                ref: ${{ env.ref }}
             - name: Output artifact name and version for Download action
               id: artifact_file
               run: |
